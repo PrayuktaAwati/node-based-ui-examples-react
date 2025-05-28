@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
 	Box,
 	Card,
@@ -24,11 +24,38 @@ import ReactFlow, {
 	getConnectedEdges
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide } from "d3-force";
 
-const CustomNode = ({
-	data,
-	id
-}: NodeProps<{ title: string; content: string; setHoveredNodeId: (id: string | null) => void }>) => {
+// comment below function if you want to use the default layout (nodes with distinct positions)
+function applyForceLayout(nodes: Node[], edges: Edge[], width = 1000, height = 600): Node[] {
+	type SimNode = { id: string; x: number; y: number; fx?: number; fy?: number };
+
+	const simNodes: SimNode[] = nodes.map((n) => ({ id: n.id, x: Math.random() * width, y: Math.random() * height }));
+	const simEdges = edges.map((e) => ({ source: e.source, target: e.target }));
+
+	const simulation = forceSimulation(simNodes)
+		.force("charge", forceManyBody().strength(-400))
+		.force("center", forceCenter(width / 2, height / 2))
+		.force("collision", forceCollide().radius(80))
+		.force("link", forceLink(simEdges).id((d: any) => d.id).distance(180).strength(1))
+		.stop();
+
+	// Run simulation
+	for (let i = 0; i < 300; i++) simulation.tick();
+
+	return nodes.map((node) => {
+		const simNode = simNodes.find((n) => n.id === node.id)!;
+		return {
+			...node,
+			position: {
+				x: simNode.x,
+				y: simNode.y,
+			},
+		};
+	});
+}
+
+const CustomNode = ({data, id}: NodeProps<{ title: string; content: string; setHoveredNodeId: (id: string | null) => void }>) => {
 	const handleCopy = () => {
 		navigator.clipboard.writeText(data.title);
 	};
@@ -68,10 +95,10 @@ const nodeTypes = {
 
 const initialNodes: Array<Node> = [
 	{ id: "1", data: { title: "Node 1", content: "card content area" }, position: { x: 100, y: 10 }, type: "customNode" },
-	{ id: "2", data: { title: "Node 2", content: "card content area" }, position: { x: 10, y: 200 }, type: "customNode" },
-	{ id: "3", data: { title: "Node 3", content: "card content area" }, position: { x: 300, y: 300 }, type: "customNode" },
-	{ id: "4", data: { title: "Node 4", content: "card content area" }, position: { x: 500, y: 100 }, type: "customNode" },
-	{ id: "5", data: { title: "Node 5", content: "card content area" }, position: { x: 800, y: 300 }, type: "customNode" }
+	{ id: "2", data: { title: "Node 2", content: "card content area" }, position: { x: 100, y: 10 }, type: "customNode" },
+	{ id: "3", data: { title: "Node 3", content: "card content area" }, position: { x: 100, y: 10 }, type: "customNode" },
+	{ id: "4", data: { title: "Node 4", content: "card content area" }, position: { x: 100, y: 10 }, type: "customNode" },
+	{ id: "5", data: { title: "Node 5", content: "card content area" }, position: { x: 100, y: 10 }, type: "customNode" }
 ];
 
 const initialEdges: Array<Edge> = [
@@ -84,6 +111,13 @@ const ReactFlowImpl = () => {
 	const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 	const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+
+	// also comment below useEffect if you want to use the default layout
+	useEffect(() => {
+		const laidOutNodes = applyForceLayout(initialNodes, initialEdges);
+		setNodes(laidOutNodes);
+		setEdges(initialEdges);
+	}, [setNodes, setEdges]);
 
 	const highlightedElements = useMemo(() => {
 		if (!hoveredNodeId) return { nodes: [], edges: [] };
