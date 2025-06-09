@@ -102,10 +102,9 @@ const initialNodes: Array<Node> = [
 ];
 
 const initialEdges: Array<Edge> = [
-	{ id: "1-2", source: "1", target: "2", animated: true },
-	{ id: "4-5", source: "4", target: "5", animated: true },
-	{ id: "1-3", source: "1", target: "3", animated: true },
-	{ id: "3-4", source: "3", target: "4", animated: true }
+    { id: "1-2", source: "1", target: "2", animated: true, data: { label: "Connection 1-2" } },
+    { id: "2-1", source: "2", target: "1", animated: true, data: { label: "Connection 2-1" } },
+    { id: "1-3", source: "1", target: "3", animated: true, data: { label: "Connection 1-3" } }
 ];
 
 const ReactFlowImpl = () => {
@@ -137,7 +136,14 @@ const ReactFlowImpl = () => {
 		};
 	}, [hoveredNodeId, nodes, edges]);
 
-	const nodeStyle = (node) => {
+	interface NodeStyle {
+		opacity?: number;
+		filter?: string;
+		transition?: string;
+		[key: string]: any;
+	}
+
+	const nodeStyle = (node: Node): NodeStyle => {
 		const isHovered = highlightedElements.nodes.length > 0;
 		const isHighlighted = highlightedElements.nodes.find((n) => n?.id === node.id);
 		return {
@@ -148,7 +154,15 @@ const ReactFlowImpl = () => {
 		};
 	};
 
-	const edgeStyle = (edge) => {
+	interface EdgeStyle {
+		stroke?: string;
+		opacity?: number;
+		filter?: string;
+		transition?: string;
+		[key: string]: any;
+	}
+
+	const edgeStyle = (edge: Edge): EdgeStyle => {
 		const isHovered = highlightedElements.edges.length > 0;
 		const isHighlighted = highlightedElements.edges.find((e) => e?.id === edge.id);
 		return {

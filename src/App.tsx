@@ -1,8 +1,8 @@
-import ReactFlowImpl from "./ReactFlowImpl";
+import ReactForce2DCmp from "./components/ReactForce2DCmp";
 
 const App = () => {
 	return (
-		<ReactFlowImpl />
+		<ReactForce2DCmp />
 	);
 };
 
